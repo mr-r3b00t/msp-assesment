@@ -1,0 +1,283 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MSP Cloud Backup Service Detailed Assessment</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .error { color: red; font-size: 0.875rem; display: none; }
+        .conditional { display: none; }
+        .question-number { display: inline-block; width: 2rem; font-weight: bold; }
+    </style>
+</head>
+<body class="bg-gray-100 flex justify-center items-center min-h-screen">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-5xl">
+        <h1 class="text-3xl font-bold mb-8 text-center">MSP Cloud Backup Service Detailed Assessment</h1>
+        <div id="errorMessage" class="text-red-500 text-center mb-4 hidden">Failed to load questions. Please check the console for details.</div>
+        <form id="assessmentForm" class="space-y-8">
+            <!-- Form content will be dynamically generated here -->
+        </form>
+    </div>
+
+    <script>
+        // Function to toggle conditional fields
+        function toggleField(fieldId, show) {
+            const field = document.getElementById(fieldId);
+            if (field) {
+                field.style.display = show ? 'block' : 'none';
+                const inputs = field.querySelectorAll('input, select, textarea');
+                inputs.forEach(input => input.required = show);
+            }
+        }
+
+        // Function to generate form elements from JSON
+        function renderForm(data) {
+            const form = document.getElementById('assessmentForm');
+            data.sections.forEach(section => {
+                // Create section div
+                const sectionDiv = document.createElement('div');
+                sectionDiv.className = 'border p-6 rounded';
+                sectionDiv.innerHTML = `<h2 class="text-2xl font-semibold mb-6">${section.name}</h2>`;
+
+                // Handle subsections or questions directly
+                const items = section.subsections || [{ questions: section.questions }];
+                items.forEach(subsection => {
+                    if (subsection.name) {
+                        const subsectionDiv = document.createElement('div');
+                        subsectionDiv.className = 'mb-6';
+                        subsectionDiv.innerHTML = `<h3 class="text-xl font-medium mb-4">${subsection.name}</h3>`;
+                        sectionDiv.appendChild(subsectionDiv);
+                        renderQuestions(subsection.questions, subsectionDiv);
+                    } else {
+                        renderQuestions(subsection.questions, sectionDiv);
+                    }
+                });
+
+                form.appendChild(sectionDiv);
+            });
+
+            // Add submit button
+            const submitDiv = document.createElement('div');
+            submitDiv.className = 'text-center';
+            submitDiv.innerHTML = '<button type="submit" class="bg-blue-500 text-white px-8 py-3 rounded hover:bg-blue-600">Submit Assessment</button>';
+            form.appendChild(submitDiv);
+        }
+
+        // Function to render questions
+        function renderQuestions(questions, parentDiv) {
+            questions.forEach(question => {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'mb-4';
+                let html = `<p class="font-medium"><span class="question-number">${question.number}.</span> ${question.text}</p>`;
+
+                // Render input based on type
+                if (question.type === 'radio') {
+                    question.options.forEach(option => {
+                        const fieldId = question.conditional && option === question.conditional.trigger ? `conditional-${question.number}` : '';
+                        html += `
+                            <label class="mr-4">
+                                <input type="radio" name="q${question.number}" value="${option}" 
+                                    ${question.conditional && option === question.conditional.trigger ? `onclick="toggleField('${fieldId}', this.checked)"` : ''}>
+                                ${option}
+                            </label>`;
+                    });
+                    html += `<p id="q${question.number}Error" class="error">Please select an option.</p>`;
+                } else if (question.type === 'select') {
+                    html += `
+                        <select name="q${question.number}" class="w-full p-2 border rounded">
+                            ${question.options.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
+                        </select>
+                        <p id="q${question.number}Error" class="error">Please select an option.</p>`;
+                } else if (question.type === 'textarea') {
+                    html += `
+                        <textarea name="q${question.number}" class="w-full p-2 border rounded" placeholder="Enter details"></textarea>
+                        <p id="q${question.number}Error" class="error">Please provide details.</p>`;
+                } else if (question.type === 'number') {
+                    html += `
+                        <input type="number" name="q${question.number}" class="w-full p-2 border rounded" placeholder="e.g., 365">
+                        <p id="q${question.number}Error" class="error">Please provide a number.</p>`;
+                } else if (question.type === 'date') {
+                    html += `
+                        <input type="date" name="q${question.number}" class="w-full p-2 border rounded">
+                        <p id="q${question.number}Error" class="error">Please provide a date.</p>`;
+                } else if (question.type === 'checkbox') {
+                    question.options.forEach(option => {
+                        html += `
+                            <label class="block">
+                                <input type="checkbox" name="q${question.number}" value="${option}">
+                                ${option}
+                            </label>`;
+                    });
+                    html += `<p id="q${question.number}Error" class="error">Please select at least one option.</p>`;
+                }
+
+                // Render conditional fields
+                if (question.conditional) {
+                    const conditionalDiv = document.createElement('div');
+                    conditionalDiv.id = `conditional-${question.number}`;
+                    conditionalDiv.className = 'conditional mt-2';
+                    question.conditional.fields.forEach(field => {
+                        let fieldHtml = `<label class="block mb-1">${field.number ? `<span class="question-number">${field.number}.</span> ` : ''}${field.text}</label>`;
+                        const fieldName = `q${question.number}-${field.text.replace(/\s/g, '')}`;
+                        if (field.type === 'select') {
+                            fieldHtml += `
+                                <select name="${fieldName}" class="w-full p-2 border rounded mb-2">
+                                    ${field.options.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
+                                </select>`;
+                        } else if (field.type === 'text' || field.type === 'number' || field.type === 'date') {
+                            fieldHtml += `<input type="${field.type}" name="${fieldName}" class="w-full p-2 border rounded mb-2" placeholder="Enter ${field.text.toLowerCase()}">`;
+                        } else if (field.type === 'textarea') {
+                            fieldHtml += `<textarea name="${fieldName}" class="w-full p-2 border rounded" placeholder="Enter ${field.text.toLowerCase()}"></textarea>`;
+                        } else if (field.type === 'radio') {
+                            field.options.forEach(opt => {
+                                const subFieldId = field.conditional && opt === field.conditional.trigger ? `conditional-${question.number}-${field.text.replace(/\s/g, '')}` : '';
+                                fieldHtml += `
+                                    <label class="mr-4">
+                                        <input type="radio" name="${fieldName}" value="${opt}" 
+                                            ${field.conditional && opt === field.conditional.trigger ? `onclick="toggleField('${subFieldId}', this.checked)"` : ''}>
+                                        ${opt}
+                                    </label>`;
+                            });
+                        }
+                        fieldHtml += `<p id="${fieldName}Error" class="error">Please provide ${field.text.toLowerCase()}.</p>`;
+
+                        // Handle nested conditionals (e.g., classificationBasedRetention)
+                        if (field.conditional) {
+                            const subConditionalDiv = document.createElement('div');
+                            subConditionalDiv.id = `conditional-${question.number}-${field.text.replace(/\s/g, '')}`;
+                            subConditionalDiv.className = 'conditional mt-2';
+                            field.conditional.fields.forEach(subField => {
+                                let subFieldHtml = `<label class="block mb-1">${subField.text}</label>`;
+                                const subFieldName = `q${question.number}-${field.text.replace(/\s/g, '')}-${subField.text.replace(/\s/g, '')}`;
+                                if (subField.type === 'textarea') {
+                                    subFieldHtml += `<textarea name="${subFieldName}" class="w-full p-2 border rounded" placeholder="Enter ${subField.text.toLowerCase()}"></textarea>`;
+                                }
+                                subFieldHtml += `<p id="${subFieldName}Error" class="error">Please provide ${subField.text.toLowerCase()}.</p>`;
+                                subConditionalDiv.innerHTML += subFieldHtml;
+                            });
+                            fieldHtml += subConditionalDiv.outerHTML;
+                        }
+
+                        conditionalDiv.innerHTML += fieldHtml;
+                    });
+                    questionDiv.innerHTML = html;
+                    questionDiv.appendChild(conditionalDiv);
+                } else {
+                    questionDiv.innerHTML = html;
+                }
+
+                parentDiv.appendChild(questionDiv);
+            });
+        }
+
+        // Fetch and render the JSON
+        fetch('questions.json')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => renderForm(data))
+            .catch(error => {
+                console.error('Error loading JSON:', error);
+                const errorMessage = document.getElementById('errorMessage');
+                errorMessage.classList.remove('hidden');
+            });
+
+        // Form validation
+        document.getElementById('assessmentForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            let isValid = true;
+
+            // Validate radio groups
+            const radioGroups = document.querySelectorAll('input[type="radio"]');
+            const radioNames = new Set([...radioGroups].map(r => r.name));
+            radioNames.forEach(name => {
+                const radios = document.querySelectorAll(`input[name="${name}"]:checked`);
+                const error = document.getElementById(`${name}Error`);
+                if (error && radios.length === 0) {
+                    error.style.display = 'block';
+                    isValid = false;
+                } else if (error) {
+                    error.style.display = 'none';
+                }
+            });
+
+            // Validate selects, textareas, numbers, and dates
+            const inputs = document.querySelectorAll('select, textarea, input[type="number"], input[type="date"]');
+            inputs.forEach(input => {
+                if (input.required && !input.value.trim()) {
+                    const error = document.getElementById(`${input.name}Error`);
+                    if (error) {
+                        error.style.display = 'block';
+                        isValid = false;
+                    }
+                } else {
+                    const error = document.getElementById(`${input.name}Error`);
+                    if (error) error.style.display = 'none';
+                }
+            });
+
+            // Validate checkboxes
+            const checkboxGroups = document.querySelectorAll('input[type="checkbox"]');
+            const checkboxNames = new Set([...checkboxGroups].map(c => c.name));
+            checkboxNames.forEach(name => {
+                const checked = document.querySelectorAll(`input[name="${name}"]:checked`);
+                const error = document.getElementById(`${name}Error`);
+                if (error && checked.length === 0) {
+                    error.style.display = 'block';
+                    isValid = false;
+                } else if (error) {
+                    error.style.display = 'none';
+                }
+            });
+
+            if (isValid) {
+                alert('Assessment submitted successfully!');
+                this.reset();
+            }
+        });
+    </script>
+</body>
+</html>
