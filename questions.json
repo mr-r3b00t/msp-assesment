@@ -1,0 +1,1086 @@
+{
+  "sections": [
+    {
+      "name": "Secure Configuration",
+      "questions": [
+        {
+          "number": 1,
+          "text": "Is encryption used for data at rest?",
+          "type": "radio",
+          "options": ["Yes", "No"],
+          "required": true,
+          "conditional": {
+            "trigger": "Yes",
+            "fields": [
+              {
+                "text": "Encryption algorithm(s) used",
+                "type": "select",
+                "options": ["", "AES-256", "AES-128", "ChaCha20", "Other"],
+                "required": true
+              },
+              {
+                "text": "Specify other algorithm",
+                "type": "text",
+                "required": false
+              },
+              {
+                "text": "Key length (in bits)",
+                "type": "number",
+                "required": true
+              }
+            ]
+          }
+        },
+        {
+          "number": 2,
+          "text": "Is encryption used for data in transit?",
+          "type": "radio",
+          "options": ["Yes", "No"],
+          "required": true,
+          "conditional": {
+            "trigger": "Yes",
+            "fields": [
+              {
+                "text": "Protocol and version",
+                "type": "select",
+                "options": ["", "TLS 1.3", "TLS 1.2", "SSL (Deprecated)", "Other"],
+                "required": true
+              },
+              {
+                "text": "Specify other protocol",
+                "type": "text",
+                "required": false
+              },
+              {
+                "text": "Cipher suite(s) used",
+                "type": "textarea",
+                "required": true
+              }
+            ]
+          }
+        },
+        {
+          "number": 3,
+          "text": "Are access controls implemented to restrict unauthorized access?",
+          "type": "radio",
+          "options": ["Yes", "No"],
+          "required": true,
+          "conditional": {
+            "trigger": "Yes",
+            "fields": [
+              {
+                "text": "Select all applicable access control types",
+                "type": "checkbox",
+                "options": ["RBAC", "MFA", "LeastPrivilege", "Other"],
+                "required": true
+              },
+              {
+                "text": "Describe additional access controls or details",
+                "type": "textarea",
+                "required": false
+              }
+            ]
+          }
+        },
+        {
+          "number": 4,
+          "text": "Is there a documented configuration management process?",
+          "type": "radio",
+          "options": ["Yes", "No"],
+          "required": true,
+          "conditional": {
+            "trigger": "Yes",
+            "fields": [
+              {
+                "text": "How often are configurations reviewed?",
+                "type": "select",
+                "options": ["", "Daily", "Weekly", "Monthly", "Quarterly", "Annually"],
+                "required": true
+              },
+              {
+                "text": "Describe the documentation and maintenance process",
+                "type": "textarea",
+                "required": true
+              }
+            ]
+          }
+        },
+        {
+          "number": 5,
+          "text": "Is there a vulnerability management process in place?",
+          "type": "radio",
+          "options": ["Yes", "No"],
+          "required": true,
+          "conditional": {
+            "trigger": "Yes",
+            "fields": [
+              {
+                "text": "Frequency of vulnerability scans",
+                "type": "select",
+                "options": ["", "Daily", "Weekly", "Monthly", "Quarterly"],
+                "required": true
+              },
+              {
+                "text": "Tools used for scanning",
+                "type": "text",
+                "required": true
+              },
+              {
+                "text": "Remediation process and timeline",
+                "type": "textarea",
+                "required": true
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Secure Operation",
+      "questions": [
+        {
+          "number": 6,
+          "text": "Is there a patch management process in place?",
+          "type": "radio",
+          "options": ["Yes", "No"],
+          "required": true,
+          "conditional": {
+            "trigger": "Yes",
+            "fields": [
+              {
+                "text": "Frequency of patching",
+                "type": "select",
+                "options": ["", "Daily", "Weekly", "Monthly", "As Needed"],
+                "required": true
+              },
+              {
+                "text": "Verification method",
+                "type": "textarea",
+                "required": true
+              },
+              {
+                "text": "Average time to deploy critical patches (in days)",
+                "type": "number",
+                "required": true
+              }
+            ]
+          }
+        },
+        {
+          "number": 7,
+          "text": "Is there an incident response plan?",
+          "type": "radio",
+          "options": ["Yes", "No"],
+          "required": true,
+          "conditional": {
+            "trigger": "Yes",
+            "fields": [
+              {
+                "text": "Frequency of plan testing",
+                "type": "select",
+                "options": ["", "Monthly", "Quarterly", "Annually"],
+                "required": true
+              },
+              {
+                "text": "Key components of the plan",
+                "type": "textarea",
+                "required": true
+              },
+              {
+                "text": "Average response time to incidents (in hours)",
+                "type": "number",
+                "required": true
+              }
+            ]
+          }
+        },
+        {
+          "number": 8,
+          "text": "Are backups verified for integrity and restorability?",
+          "type": "radio",
+          "options": ["Yes", "No"],
+          "required": true,
+          "conditional": {
+            "trigger": "Yes",
+            "fields": [
+              {
+                "text": "Frequency of verification",
+                "type": "select",
+                "options": ["", "Daily", "Weekly", "Monthly"],
+                "required": true
+              },
+              {
+                "text": "Verification method",
+                "type": "textarea",
+                "required": true
+              }
+            ]
+          }
+        },
+        {
+          "number": 9,
+          "text": "Is there a disaster recovery plan?",
+          "type": "radio",
+          "options": ["Yes", "No"],
+          "required": true,
+          "conditional": {
+            "trigger": "Yes",
+            "fields": [
+              {
+                "text": "Recovery Time Objective (RTO) in hours",
+                "type": "number",
+                "required": true
+              },
+              {
+                "text": "Recovery Point Objective (RPO) in hours",
+                "type": "number",
+                "required": true
+              },
+              {
+                "text": "Testing frequency",
+                "type": "select",
+                "options": ["", "Quarterly", "Annually", "Biennially"],
+                "required": true
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Independent Audits",
+      "questions": [
+        {
+          "number": 10,
+          "text": "Has the service undergone independent security audits?",
+          "type": "radio",
+          "options": ["Yes", "No"],
+          "required": true,
+          "conditional": {
+            "trigger": "Yes",
+            "fields": [
+              {
+                "number": 11,
+                "text": "Type of audit",
+                "type": "select",
+                "options": ["", "SOC 2 Type I", "SOC 2 Type II", "ISO 27001", "PCI DSS", "Other"],
+                "required": true
+              },
+              {
+                "text": "Specify other audit type",
+                "type": "text",
+                "required": false
+              },
+              {
+                "number": 12,
+                "text": "Date of last audit",
+                "type": "date",
+                "required": true
+              },
+              {
+                "number": 13,
+                "text": "Auditor’s name and credentials",
+                "type": "text",
+                "required": true
+              },
+              {
+                "number": 14,
+                "text": "Frequency of audits",
+                "type": "select",
+                "options": ["", "Annually", "Biennially", "As Needed"],
+                "required": true
+              }
+            ]
+          }
+        },
+        {
+          "number": 15,
+          "text": "Is the audit report available for review?",
+          "type": "radio",
+          "options": ["Yes", "No"],
+          "required": true
+        },
+        {
+          "number": 16,
+          "text": "Were there any findings in the last audit?",
+          "type": "radio",
+          "options": ["Yes", "No"],
+          "required": true,
+          "conditional": {
+            "trigger": "Yes",
+            "fields": [
+              {
+                "text": "Number of findings",
+                "type": "number",
+                "required": true
+              },
+              {
+                "text": "Remediation status",
+                "type": "textarea",
+                "required": true
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Appropriate and Effective Controls",
+      "questions": [
+        {
+          "number": 17,
+          "text": "Are security controls aligned with industry standards?",
+          "type": "radio",
+          "options": ["Yes", "No"],
+          "required": true,
+          "conditional": {
+            "trigger": "Yes",
+            "fields": [
+              {
+                "text": "Standards followed",
+                "type": "select",
+                "options": ["", "NIST 800-53", "CIS Controls", "ISO 27001", "Other"],
+                "required": true
+              },
+              {
+                "text": "Specify other standard",
+                "type": "text",
+                "required": false
+              }
+            ]
+          }
+        },
+        {
+          "number": 18,
+          "text": "What types of security controls are implemented?",
+          "type": "checkbox",
+          "options": ["Technical", "Administrative", "Physical", "Other"],
+          "required": true,
+          "conditional": {
+            "trigger": "Other",
+            "fields": [
+              {
+                "text": "Describe additional control types",
+                "type": "textarea",
+                "required": false
+              }
+            ]
+          }
+        },
+        {
+          "number": 19,
+          "text": "How often are controls tested?",
+          "type": "select",
+          "options": ["", "Monthly", "Quarterly", "Annually", "As Needed"],
+          "required": true
+        },
+        {
+          "number": 20,
+          "text": "Results of the most recent control test",
+          "type": "textarea",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "Service Monitoring",
+      "questions": [
+        {
+          "number": 21,
+          "text": "Is the service continuously monitored?",
+          "type": "radio",
+          "options": ["Yes", "No"],
+          "required": true,
+          "conditional": {
+            "trigger": "Yes",
+            "fields": [
+              {
+                "text": "Tools used for monitoring",
+                "type": "text",
+                "required": true
+              },
+              {
+                "text": "Types of events monitored",
+                "type": "textarea",
+                "required": true
+              },
+              {
+                "text": "Alerting mechanisms",
+                "type": "textarea",
+                "required": true
+              }
+            ]
+          }
+        },
+        {
+          "number": 22,
+          "text": "What is the typical response time to alerts (in minutes)?",
+          "type": "number",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "Data Safety",
+      "questions": [
+        {
+          "number": 23,
+          "text": "Are there data retention policies in place?",
+          "type": "radio",
+          "options": ["Yes", "No"],
+          "required": true,
+          "conditional": {
+            "trigger": "Yes",
+            "fields": [
+              {
+                "text": "Retention period (in days)",
+                "type": "number",
+                "required": true
+              },
+              {
+                "text": "Policy details",
+                "type": "textarea",
+                "required": true
+              }
+            ]
+          }
+        },
+        {
+          "number": 24,
+          "text": "Is data classified and handled according to its sensitivity?",
+          "type": "radio",
+          "options": ["Yes", "No"],
+          "required": true,
+          "conditional": {
+            "trigger": "Yes",
+            "fields": [
+              {
+                "text": "Classification categories",
+                "type": "textarea",
+                "required": true
+              }
+            ]
+          }
+        },
+        {
+          "number": 25,
+          "text": "Are there physical security measures for data centers?",
+          "type": "radio",
+          "options": ["Yes", "No"],
+          "required": true,
+          "conditional": {
+            "trigger": "Yes",
+            "fields": [
+              {
+                "text": "Measures implemented",
+                "type": "textarea",
+                "required": true
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Insider Threat Management",
+      "subsections": [
+        {
+          "name": "Privilege Management",
+          "questions": [
+            {
+              "number": 26,
+              "text": "Does the MSP implement the principle of least privilege for all users?",
+              "type": "radio",
+              "options": ["Yes", "No"],
+              "required": true
+            },
+            {
+              "number": 27,
+              "text": "Does the MSP categorize users into high, medium, and low privilege levels?",
+              "type": "radio",
+              "options": ["Yes", "No"],
+              "required": true
+            },
+            {
+              "number": 28,
+              "text": "What criteria are used to assign privilege levels to users?",
+              "type": "textarea",
+              "required": true
+            },
+            {
+              "number": 29,
+              "text": "How frequently are user privileges reviewed and updated?",
+              "type": "select",
+              "options": ["", "Monthly", "Quarterly", "Annually", "Other"],
+              "required": true,
+              "conditional": {
+                "trigger": "Other",
+                "fields": [
+                  {
+                    "text": "Specify other frequency",
+                    "type": "textarea",
+                    "required": true
+                  }
+                ]
+              }
+            },
+            {
+              "number": 30,
+              "text": "Is there an automated process for deprovisioning user accounts when they are no longer needed?",
+              "type": "radio",
+              "options": ["Yes", "No"],
+              "required": true
+            },
+            {
+              "number": 31,
+              "text": "Are high-privileged users required to use multi-factor authentication (MFA)?",
+              "type": "radio",
+              "options": ["Yes", "No"],
+              "required": true
+            },
+            {
+              "number": 32,
+              "text": "Are low-privileged users prevented from accessing administrative tools?",
+              "type": "radio",
+              "options": ["Yes", "No"],
+              "required": true
+            }
+          ]
+        },
+        {
+          "name": "Monitoring and Auditing",
+          "questions": [
+            {
+              "number": 33,
+              "text": "Are all user activities logged, including those of high-privileged users?",
+              "type": "radio",
+              "options": ["Yes", "No"],
+              "required": true
+            },
+            {
+              "number": 34,
+              "text": "How long are audit logs retained (in days)?",
+              "type": "number",
+              "required": true
+            },
+            {
+              "number": 35,
+              "text": "Is there real-time monitoring for suspicious activities?",
+              "type": "radio",
+              "options": ["Yes", "No"],
+              "required": true
+            },
+            {
+              "number": 36,
+              "text": "Are high-privileged user sessions recorded?",
+              "type": "radio",
+              "options": ["Yes", "No"],
+              "required": true
+            },
+            {
+              "number": 37,
+              "text": "Are there time-based restrictions on high-privileged user actions?",
+              "type": "radio",
+              "options": ["Yes", "No"],
+              "required": true,
+              "conditional": {
+                "trigger": "Yes",
+                "fields": [
+                  {
+                    "text": "Describe the time-based restrictions",
+                    "type": "textarea",
+                    "required": true
+                  }
+                ]
+              }
+            },
+            {
+              "number": 38,
+              "text": "Is there a mechanism to detect privilege escalation attempts by low-privileged users?",
+              "type": "radio",
+              "options": ["Yes", "No"],
+              "required": true
+            },
+            {
+              "number": 39,
+              "text": "Are there different monitoring policies for high-privileged users compared to low-privileged users?",
+              "type": "radio",
+              "options": ["Yes", "No"],
+              "required": true,
+              "conditional": {
+                "trigger": "Yes",
+                "fields": [
+                  {
+                    "text": "Describe the differences in monitoring policies",
+                    "type": "textarea",
+                    "required": true
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Separation of Duties",
+          "questions": [
+            {
+              "number": 40,
+              "text": "Are critical functions separated among different roles to prevent a single user from having excessive control?",
+              "type": "radio",
+              "options": ["Yes", "No"],
+              "required": true
+            },
+            {
+              "number": 41,
+              "text": "Is there a policy to enforce separation of duties for sensitive operations?",
+              "type": "radio",
+              "options": ["Yes", "No"],
+              "required": true
+            },
+            {
+              "number": 42,
+              "text": "Are high-privileged tasks split across multiple individuals?",
+              "type": "radio",
+              "options": ["Yes", "No"],
+              "required": true
+            }
+          ]
+        },
+        {
+          "name": "Insider Threat Detection and Response",
+          "questions": [
+            {
+              "number": 43,
+              "text": "Does the MSP use behavior analytics or anomaly detection to identify potential insider threats?",
+              "type": "radio",
+              "options": ["Yes", "No"],
+              "required": true
+            },
+            {
+              "number": 44,
+              "text": "Are there predefined indicators of compromise specific to insider threats?",
+              "type": "radio",
+              "options": ["Yes", "No"],
+              "required": true,
+              "conditional": {
+                "trigger": "Yes",
+                "fields": [
+                  {
+                    "text": "List the indicators",
+                    "type": "textarea",
+                    "required": true
+                  }
+                ]
+              }
+            },
+            {
+              "number": 45,
+              "text": "Is there a specific incident response plan for insider threats?",
+              "type": "radio",
+              "options": ["Yes", "No"],
+              "required": true
+            },
+            {
+              "number": 46,
+              "text": "How does the insider threat response differ from external threat response?",
+              "type": "textarea",
+              "required": true
+            },
+            {
+              "number": 47,
+              "text": "Do employees receive training on recognizing and reporting insider threat risks?",
+              "type": "radio",
+              "options": ["Yes", "No"],
+              "required": true
+            }
+          ]
+        },
+        {
+          "name": "Data Protection Measures",
+          "questions": [
+            {
+              "number": 48,
+              "text": "Are there role-based access controls (RBAC) to restrict data access based on user privileges?",
+              "type": "radio",
+              "options": ["Yes", "No"],
+              "required": true
+            },
+            {
+              "number": 49,
+              "text": "Is sensitive data encrypted in a way that prevents even high-privileged users from unauthorized access?",
+              "type": "radio",
+              "options": ["Yes", "No"],
+              "required": true
+            },
+            {
+              "number": 50,
+              "text": "Are there additional approval processes for high-privileged users to access sensitive data?",
+              "type": "radio",
+              "options": ["Yes", "No"],
+              "required": true
+            },
+            {
+              "number": 51,
+              "text": "Are low-privileged users restricted from accessing sensitive data beyond their role?",
+              "type": "radio",
+              "options": ["Yes", "No"],
+              "required": true
+            }
+          ]
+        },
+        {
+          "name": "Physical Security Controls",
+          "questions": [
+            {
+              "number": 52,
+              "text": "Are there physical security measures to prevent unauthorized access to hardware by insiders?",
+              "type": "radio",
+              "options": ["Yes", "No"],
+              "required": true,
+              "conditional": {
+                "trigger": "Yes",
+                "fields": [
+                  {
+                    "text": "Describe the measures",
+                    "type": "textarea",
+                    "required": true
+                  }
+                ]
+              }
+            },
+            {
+              "number": 53,
+              "text": "Are high-privileged users subject to additional physical security checks?",
+              "type": "radio",
+              "options": ["Yes", "No"],
+              "required": true,
+              "conditional": {
+                "trigger": "Yes",
+                "fields": [
+                  {
+                    "text": "Describe the additional checks",
+                    "type": "textarea",
+                    "required": true
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Third-Party and Contractor Management",
+          "questions": [
+            {
+              "number": 54,
+              "text": "Are third-party contractors vetted before being granted access to systems?",
+              "type": "radio",
+              "options": ["Yes", "No"],
+              "required": true
+            },
+            {
+              "number": 55,
+              "text": "Are the activities of third-party contractors monitored similarly to employees?",
+              "type": "radio",
+              "options": ["Yes", "No"],
+              "required": true
+            },
+            {
+              "number": 56,
+              "text": "Are third-party contractors assigned privilege levels similar to employees?",
+              "type": "radio",
+              "options": ["Yes", "No"],
+              "required": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Vulnerability Assessments and Security Testing",
+      "subsections": [
+        {
+          "name": "Vulnerability Assessments",
+          "questions": [
+            {
+              "number": 57,
+              "text": "Does the MSP conduct regular vulnerability assessments?",
+              "type": "radio",
+              "options": ["Yes", "No"],
+              "required": true,
+              "conditional": {
+                "trigger": "Yes",
+                "fields": [
+                  {
+                    "text": "Describe the tools and scope of vulnerability assessments",
+                    "type": "textarea",
+                    "required": true
+                  },
+                  {
+                    "number": 58,
+                    "text": "When was the last vulnerability assessment conducted?",
+                    "type": "date",
+                    "required": true
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Penetration Testing",
+          "questions": [
+            {
+              "number": 59,
+              "text": "Does the MSP perform penetration testing on the backup service?",
+              "type": "radio",
+              "options": ["Yes", "No"],
+              "required": true,
+              "conditional": {
+                "trigger": "Yes",
+                "fields": [
+                  {
+                    "text": "Describe the scope and methodology of penetration testing",
+                    "type": "textarea",
+                    "required": true
+                  },
+                  {
+                    "number": 60,
+                    "text": "When was the last penetration test conducted?",
+                    "type": "date",
+                    "required": true
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Purple Teaming",
+          "questions": [
+            {
+              "number": 61,
+              "text": "Does the MSP conduct purple team exercises to enhance security?",
+              "type": "radio",
+              "options": ["Yes", "No"],
+              "required": true,
+              "conditional": {
+                "trigger": "Yes",
+                "fields": [
+                  {
+                    "text": "Describe the collaboration between red and blue teams in purple team exercises",
+                    "type": "textarea",
+                    "required": true
+                  },
+                  {
+                    "number": 62,
+                    "text": "When was the last purple team exercise conducted?",
+                    "type": "date",
+                    "required": true
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Red Teaming",
+          "questions": [
+            {
+              "number": 63,
+              "text": "Does the MSP conduct red team exercises to test security resilience?",
+              "type": "radio",
+              "options": ["Yes", "No"],
+              "required": true,
+              "conditional": {
+                "trigger": "Yes",
+                "fields": [
+                  {
+                    "text": "Describe the scope and objectives of red team exercises",
+                    "type": "textarea",
+                    "required": true
+                  },
+                  {
+                    "number": 64,
+                    "text": "When was the last red team exercise conducted?",
+                    "type": "date",
+                    "required": true
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Backup Management",
+      "subsections": [
+        {
+          "name": "Backup Immutability",
+          "questions": [
+            {
+              "number": 65,
+              "text": "Does the MSP implement immutable backups to protect against tampering or deletion?",
+              "type": "radio",
+              "options": ["Yes", "No"],
+              "required": true,
+              "conditional": {
+                "trigger": "Yes",
+                "fields": [
+                  {
+                    "text": "How is immutability enforced?",
+                    "type": "textarea",
+                    "required": true
+                  },
+                  {
+                    "text": "How long are immutable backups retained (in days)?",
+                    "type": "number",
+                    "required": true
+                  },
+                  {
+                    "text": "Are there any additional costs associated with immutable backups?",
+                    "type": "radio",
+                    "options": ["Yes", "No"],
+                    "required": true
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Offsite Backups",
+          "questions": [
+            {
+              "number": 66,
+              "text": "Are backups stored offsite to protect against local disasters?",
+              "type": "radio",
+              "options": ["Yes", "No"],
+              "required": true,
+              "conditional": {
+                "trigger": "Yes",
+                "fields": [
+                  {
+                    "text": "How frequently are offsite backups updated?",
+                    "type": "select",
+                    "options": ["", "Daily", "Weekly", "Monthly", "Other"],
+                    "required": true
+                  },
+                  {
+                    "text": "Specify other frequency",
+                    "type": "textarea",
+                    "required": false
+                  },
+                  {
+                    "text": "What is the geographic distance between onsite and offsite backup locations (in miles)?",
+                    "type": "number",
+                    "required": true
+                  },
+                  {
+                    "text": "Are offsite backups encrypted during transfer and storage?",
+                    "type": "radio",
+                    "options": ["Yes", "No"],
+                    "required": true
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tape Medium",
+          "questions": [
+            {
+              "number": 67,
+              "text": "Does the MSP use tape backups as part of their backup strategy?",
+              "type": "radio",
+              "options": ["Yes", "No"],
+              "required": true,
+              "conditional": {
+                "trigger": "Yes",
+                "fields": [
+                  {
+                    "text": "What type of tape technology is used?",
+                    "type": "select",
+                    "options": ["", "LTO-8", "LTO-7", "LTO-6", "Other"],
+                    "required": true
+                  },
+                  {
+                    "text": "Specify other technology",
+                    "type": "textarea",
+                    "required": false
+                  },
+                  {
+                    "text": "How are tapes stored to ensure physical security?",
+                    "type": "textarea",
+                    "required": true
+                  },
+                  {
+                    "text": "Is there a rotation schedule for tape backups?",
+                    "type": "radio",
+                    "options": ["Yes", "No"],
+                    "required": true
+                  },
+                  {
+                    "text": "How often are tapes tested for data integrity?",
+                    "type": "select",
+                    "options": ["", "Monthly", "Quarterly", "Annually", "Other"],
+                    "required": true
+                  },
+                  {
+                    "text": "Specify other frequency",
+                    "type": "textarea",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retention Policies",
+          "questions": [
+            {
+              "number": 68,
+              "text": "Does the MSP have a documented backup retention policy?",
+              "type": "radio",
+              "options": ["Yes", "No"],
+              "required": true,
+              "conditional": {
+                "trigger": "Yes",
+                "fields": [
+                  {
+                    "text": "What is the standard retention period for backups (in days)?",
+                    "type": "number",
+                    "required": true
+                  },
+                  {
+                    "text": "Are there different retention periods based on data classification?",
+                    "type": "radio",
+                    "options": ["Yes", "No"],
+                    "required": true,
+                    "conditional": {
+                      "trigger": "Yes",
+                      "fields": [
+                        {
+                          "text": "Describe the retention periods for each classification level",
+                          "type": "textarea",
+                          "required": true
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "text": "How are retention policies enforced?",
+                    "type": "textarea",
+                    "required": true
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
