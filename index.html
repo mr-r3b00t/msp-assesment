@@ -6,6 +6,7 @@
     <title>MSP Cloud Backup Service Detailed Assessment</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         .error { color: red; font-size: 0.875rem; display: none; }
         .conditional { display: none; }
@@ -72,6 +73,9 @@
                 </div>
             </div>
             <!-- Dynamic Questions from JSON -->
+            <div class="text-center">
+                <button type="submit" class="bg-blue-500 text-white px-8 py-3 rounded hover:bg-blue-600">Export to PDF</button>
+            </div>
         </form>
     </div>
 
@@ -106,7 +110,26 @@
             if (field) {
                 field.style.display = show ? 'block' : 'none';
                 const inputs = field.querySelectorAll('input, select, textarea');
-                inputs.forEach(input => input.required = show);
+                inputs.forEach(input => {
+                    input.required = show;
+                    // If the input is a radio button with its own conditional fields, toggle them
+                    if (input.type === 'radio' && input.checked) {
+                        const subFieldId = input.getAttribute('onclick')?.match(/'conditional-[^']*'/);
+                        if (subFieldId) {
+                            toggleField(subFieldId[0].replace(/'/g, ''), show && input.checked);
+                        }
+                    }
+                });
+                // Hide any nested conditional fields when parent is hidden
+                if (!show) {
+                    const nestedConditionals = field.querySelectorAll('.conditional');
+                    nestedConditionals.forEach(nested => {
+                        nested.style.display = 'none';
+                        nested.querySelectorAll('input, select, textarea').forEach(nestedInput => {
+                            nestedInput.required = false;
+                        });
+                    });
+                }
             }
         }
 
@@ -138,12 +161,12 @@
                 }
             });
 
-            localStorage.setItem('mspAssessmentState', JSON.stringify(formData));
+            localStorage.setItem('mspAssessmentFormState', JSON.stringify(formData));
         }
 
         // Function to load form state from localStorage
         function loadFormState() {
-            const savedState = localStorage.getItem('mspAssessmentState');
+            const savedState = localStorage.getItem('mspAssessmentFormState');
             if (savedState) {
                 const formData = JSON.parse(savedState);
                 const form = document.getElementById('assessmentForm');
@@ -180,7 +203,7 @@
 
         // Function to clear form state
         function clearFormState() {
-            localStorage.removeItem('mspAssessmentState');
+            localStorage.removeItem('mspAssessmentFormState');
             document.getElementById('assessmentForm').reset();
             const conditionals = document.querySelectorAll('.conditional');
             conditionals.forEach(conditional => {
@@ -211,13 +234,8 @@
                     }
                 });
 
-                form.appendChild(sectionDiv);
+                form.insertBefore(sectionDiv, form.lastElementChild);
             });
-
-            const submitDiv = document.createElement('div');
-            submitDiv.className = 'text-center';
-            submitDiv.innerHTML = '<button type="submit" class="bg-blue-500 text-white px-8 py-3 rounded hover:bg-blue-600">Submit Assessment</button>';
-            form.appendChild(submitDiv);
 
             // Load saved state after rendering
             loadFormState();
@@ -227,6 +245,26 @@
             inputs.forEach(input => {
                 input.addEventListener('change', saveFormState);
                 input.addEventListener('input', saveFormState);
+            });
+
+            // Add event listeners for radio buttons to handle conditional fields
+            const radioGroups = document.querySelectorAll('input[type="radio"]');
+            const radioNames = new Set([...radioGroups].map(r => r.name));
+            radioNames.forEach(name => {
+                const radios = document.querySelectorAll(`input[name="${name}"]`);
+                radios.forEach(radio => {
+                    radio.addEventListener('change', () => {
+                        // Find the radio button with a conditional field
+                        const conditionalRadio = Array.from(radios).find(r => r.getAttribute('onclick')?.includes('toggleField'));
+                        if (conditionalRadio) {
+                            const fieldId = conditionalRadio.getAttribute('onclick')?.match(/'conditional-[^']*'/);
+                            if (fieldId) {
+                                const isTriggerSelected = radio.checked && radio === conditionalRadio;
+                                toggleField(fieldId[0].replace(/'/g, ''), isTriggerSelected);
+                            }
+                        }
+                    });
+                });
             });
         }
 
@@ -243,7 +281,7 @@
                         html += `
                             <label class="mr-4">
                                 <input type="radio" name="q${question.number}" value="${option}" 
-                                    ${question.conditional && option === question.conditional.trigger ? `onclick="toggleField('${fieldId}', this.checked)"` : ''}>
+                                    ${fieldId ? `onclick="toggleField('${fieldId}', this.checked)"` : ''}>
                                 ${option}
                             </label>`;
                     });
@@ -299,7 +337,7 @@
                                 fieldHtml += `
                                     <label class="mr-4">
                                         <input type="radio" name="${fieldName}" value="${opt}" 
-                                            ${field.conditional && opt === field.conditional.trigger ? `onclick="toggleField('${subFieldId}', this.checked)"` : ''}>
+                                            ${subFieldId ? `onclick="toggleField('${subFieldId}', this.checked)"` : ''}>
                                         ${opt}
                                     </label>`;
                             });
@@ -352,7 +390,123 @@
         // Clear state button event listener
         document.getElementById('clearStateButton').addEventListener('click', clearFormState);
 
-        // Form validation
+        // Function to generate PDF
+        function generatePDF(formData, questionsData) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            let y = 10;
+
+            // Title
+            doc.setFontSize(16);
+            doc.text('MSP Cloud Backup Service Assessment', 10, y);
+            y += 10;
+
+            // Assessment Details
+            doc.setFontSize(12);
+            doc.text('Assessment Details', 10, y);
+            y += 5;
+            doc.setFontSize(10);
+            doc.text(`Assessor’s Name: ${formData.assessorName || ''}`, 10, y);
+            y += 5;
+            doc.text(`Date: ${formData.assessmentDate || ''}`, 10, y);
+            y += 5;
+            doc.text(`Assessment Company Name: ${formData.companyName || ''}`, 10, y);
+            y += 5;
+            doc.text(`Assessor’s Company Website: ${formData.companyWebsite || ''}`, 10, y);
+            y += 5;
+            doc.text(`Organisation Being Assessed: ${formData.organisation || ''}`, 10, y);
+            y += 5;
+            doc.text(`Service Being Assessed: ${formData.service || ''}`, 10, y);
+            y += 10;
+
+            // Dynamic Questions
+            questionsData.sections.forEach(section => {
+                if (y > 270) {
+                    doc.addPage();
+                    y = 10;
+                }
+                doc.setFontSize(12);
+                doc.text(section.name, 10, y);
+                y += 5;
+
+                const items = section.subsections || [{ questions: section.questions }];
+                items.forEach(subsection => {
+                    if (subsection.name) {
+                        if (y > 270) {
+                            doc.addPage();
+                            y = 10;
+                        }
+                        doc.setFontSize(11);
+                        doc.text(subsection.name, 10, y);
+                        y += 5;
+                    }
+                    subsection.questions.forEach(question => {
+                        if (y > 270) {
+                            doc.addPage();
+                            y = 10;
+                        }
+                        doc.setFontSize(10);
+                        const questionText = `${question.number}. ${question.text}`;
+                        const splitText = doc.splitTextToSize(questionText, 180);
+                        doc.text(splitText, 10, y);
+                        y += splitText.length * 5;
+
+                        let answer = '';
+                        if (question.type === 'checkbox') {
+                            answer = (formData[`q${question.number}`] || []).join(', ');
+                        } else {
+                            answer = formData[`q${question.number}`] || '';
+                        }
+                        doc.text(`Answer: ${answer || 'N/A'}`, 15, y);
+                        y += 5;
+
+                        if (question.conditional && formData[`q${question.number}`] === question.conditional.trigger) {
+                            question.conditional.fields.forEach(field => {
+                                if (y > 270) {
+                                    doc.addPage();
+                                    y = 10;
+                                }
+                                const fieldName = `q${question.number}-${field.text.replace(/\s/g, '')}`;
+                                let fieldAnswer = '';
+                                if (field.type === 'radio' || field.type === 'select' || field.type === 'text' || field.type === 'number' || field.type === 'date' || field.type === 'textarea') {
+                                    fieldAnswer = formData[fieldName] || 'N/A';
+                                }
+                                const fieldText = field.number ? `${field.number}. ${field.text}` : field.text;
+                                doc.text(`${fieldText}: ${fieldAnswer}`, 15, y);
+                                y += 5;
+
+                                if (field.conditional && formData[fieldName] === field.conditional.trigger) {
+                                    field.conditional.fields.forEach(subField => {
+                                        if (y > 270) {
+                                            doc.addPage();
+                                            y = 10;
+                                        }
+                                        const subFieldName = `q${question.number}-${field.text.replace(/\s/g, '')}-${subField.text.replace(/\s/g, '')}`;
+                                        const subFieldAnswer = formData[subFieldName] || 'N/A';
+                                        doc.text(`${subField.text}: ${subFieldAnswer}`, 20, y);
+                                        y += 5;
+                                    });
+                                }
+                            });
+                        }
+                    });
+                    y += 5;
+                });
+            });
+
+            // Footer
+            if (y > 270) {
+                doc.addPage();
+                y = 10;
+            }
+            doc.setFontSize(8);
+            doc.text('Copyright Xservus Limited | Version 0.1', 10, 290);
+
+            // Save PDF
+            doc.save('MSP_Assessment.pdf');
+        }
+
+        // Form validation and PDF export
         document.getElementById('assessmentForm').addEventListener('submit', function(event) {
             event.preventDefault();
             let isValid = true;
@@ -427,8 +581,47 @@
             });
 
             if (isValid) {
-                alert('Assessment submitted successfully!');
-                clearFormState(); // Clear state on successful submission
+                const form = document.getElementById('assessmentForm');
+                const formData = {};
+
+                // Collect text, url, date, number inputs, selects, textareas
+                const inputs = form.querySelectorAll('input[type="text"], input[type="url"], input[type="date"], input[type="number"], select, textarea');
+                inputs.forEach(input => {
+                    formData[input.name] = input.value;
+                });
+
+                // Collect radio inputs
+                const radios = form.querySelectorAll('input[type="radio"]:checked');
+                radios.forEach(radio => {
+                    formData[radio.name] = radio.value;
+                });
+
+                // Collect checkboxes
+                const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+                checkboxes.forEach(checkbox => {
+                    if (!formData[checkbox.name]) {
+                        formData[checkbox.name] = [];
+                    }
+                    if (checkbox.checked) {
+                        formData[checkbox.name].push(checkbox.value);
+                    }
+                });
+
+                // Fetch questions.json to get structure for PDF
+                fetch('questions.json')
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        generatePDF(formData, data);
+                    })
+                    .catch(error => {
+                        console.error('Error loading JSON for PDF:', error);
+                        alert('Failed to generate PDF. Please check the console for details.');
+                    });
             }
         });
     </script>
