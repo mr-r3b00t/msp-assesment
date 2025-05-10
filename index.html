@@ -6,6 +6,7 @@
     <title>MSP Cloud Backup Service Detailed Assessment</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         .error { color: red; font-size: 0.875rem; display: none; }
         .conditional { display: none; }
@@ -71,6 +72,15 @@
                     </div>
                 </div>
             </div>
+            <!-- Service Overview -->
+            <div class="border p-6 rounded border-gray-300">
+                <h2 class="text-2xl font-semibold mb-6 text-gray-900">Service Overview</h2>
+                <div>
+                    <label class="block mb-1 text-gray-900">Service Description</label>
+                    <textarea name="serviceDescription" class="w-full p-2 border rounded border-gray-300 text-gray-900" placeholder="Provide a detailed description of the service being assessed" required></textarea>
+                    <p id="serviceDescriptionError" class="error">Please provide the service description.</p>
+                </div>
+            </div>
             <!-- Dynamic Questions from JSON -->
         </form>
     </div>
@@ -115,7 +125,7 @@
             const form = document.getElementById('assessmentForm');
             const formData = {};
             
-            // Save text, url, date, number inputs
+            // Save text, url, date, number inputs, and textareas
             const inputs = form.querySelectorAll('input[type="text"], input[type="url"], input[type="date"], input[type="number"], select, textarea');
             inputs.forEach(input => {
                 formData[input.name] = input.value;
@@ -148,7 +158,7 @@
                 const formData = JSON.parse(savedState);
                 const form = document.getElementById('assessmentForm');
 
-                // Load text, url, date, number inputs
+                // Load text, url, date, number inputs, and textareas
                 const inputs = form.querySelectorAll('input[type="text"], input[type="url"], input[type="date"], input[type="number"], select, textarea');
                 inputs.forEach(input => {
                     if (formData[input.name]) {
@@ -188,6 +198,122 @@
                 conditional.querySelectorAll('input, select, textarea').forEach(input => input.required = false);
             });
             window.location.reload(); // Reload to reset dynamic content
+        }
+
+        // Function to export form data to JSON
+        function exportToJSON() {
+            const formData = JSON.parse(localStorage.getItem('mspAssessmentState') || '{}');
+            const blob = new Blob([JSON.stringify(formData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'assessment_responses.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Function to generate PDF
+        function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const formData = JSON.parse(localStorage.getItem('mspAssessmentState') || '{}');
+            let y = 10;
+
+            // Header
+            doc.setFontSize(16);
+            doc.text('MSP Cloud Backup Service Detailed Assessment', 10, y);
+            y += 10;
+            doc.setFontSize(12);
+            doc.text('Generated on: ' + new Date().toLocaleString(), 10, y);
+            y += 10;
+
+            // Assessment Details
+            doc.setFontSize(14);
+            doc.text('Assessment Details', 10, y);
+            y += 10;
+            doc.setFontSize(10);
+            const assessmentDetails = [
+                { label: 'Assessor’s Name', key: 'assessorName' },
+                { label: 'Date', key: 'assessmentDate' },
+                { label: 'Assessment Company Name', key: 'companyName' },
+                { label: 'Assessor’s Company Website', key: 'companyWebsite' },
+                { label: 'Organisation Being Assessed', key: 'organisation' },
+                { label: 'Service Being Assessed', key: 'service' }
+            ];
+            assessmentDetails.forEach(detail => {
+                doc.text(`${detail.label}: ${formData[detail.key] || 'N/A'}`, 10, y);
+                y += 7;
+            });
+
+            // Service Overview
+            y += 5;
+            doc.setFontSize(14);
+            doc.text('Service Overview', 10, y);
+            y += 10;
+            doc.setFontSize(10);
+            const serviceDescription = formData['serviceDescription'] || 'N/A';
+            const descriptionLines = doc.splitTextToSize(`Service Description: ${serviceDescription}`, 180);
+            doc.text(descriptionLines, 10, y);
+            y += descriptionLines.length * 7;
+
+            // Dynamic Questions
+            y += 5;
+            doc.setFontSize(14);
+            doc.text('Assessment Questions', 10, y);
+            y += 10;
+            doc.setFontSize(10);
+            fetch('questions.json')
+                .then(response => response.json())
+                .then(data => {
+                    data.sections.forEach(section => {
+                        if (y > 270) {
+                            doc.addPage();
+                            y = 10;
+                        }
+                        doc.setFontSize(12);
+                        doc.text(section.name, 10, y);
+                        y += 7;
+                        const items = section.subsections || [{ questions: section.questions }];
+                        items.forEach(subsection => {
+                            if (subsection.name) {
+                                if (y > 270) {
+                                    doc.addPage();
+                                    y = 10;
+                                }
+                                doc.setFontSize(10);
+                                doc.text(subsection.name, 15, y);
+                                y += 7;
+                            }
+                            subsection.questions.forEach(question => {
+                                if (y > 270) {
+                                    doc.addPage();
+                                    y = 10;
+                                }
+                                const response = formData[`q${question.number}`] || (Array.isArray(formData[`q${question.number}`]) ? formData[`q${question.number}`].join(', ') : 'N/A');
+                                const questionText = `${question.number}. ${question.text}: ${response}`;
+                                const lines = doc.splitTextToSize(questionText, 180);
+                                doc.text(lines, 20, y);
+                                y += lines.length * 7;
+                                if (question.conditional && formData[`q${question.number}`] === question.conditional.trigger) {
+                                    question.conditional.fields.forEach(field => {
+                                        if (y > 270) {
+                                            doc.addPage();
+                                            y = 10;
+                                        }
+                                        const fieldName = `q${question.number}-${field.text.replace(/\s/g, '')}`;
+                                        const fieldResponse = formData[fieldName] || (Array.isArray(formData[fieldName]) ? formData[fieldName].join(', ') : 'N/A');
+                                        const fieldText = `${field.number ? `${field.number}. ` : ''}${field.text}: ${fieldResponse}`;
+                                        const fieldLines = doc.splitTextToSize(fieldText, 170);
+                                        doc.text(fieldLines, 25, y);
+                                        y += fieldLines.length * 7;
+                                    });
+                                }
+                            });
+                        });
+                    });
+                    doc.save('assessment_responses.pdf');
+                })
+                .catch(error => console.error('Error loading questions for PDF:', error));
         }
 
         // Function to generate form elements from JSON
@@ -334,21 +460,6 @@
             });
         }
 
-        // Fetch and render the JSON
-        fetch('questions.json')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => renderForm(data))
-            .catch(error => {
-                console.error('Error loading JSON:', error);
-                const errorMessage = document.getElementById('errorMessage');
-                errorMessage.classList.remove('hidden');
-            });
-
         // Clear state button event listener
         document.getElementById('clearStateButton').addEventListener('click', clearFormState);
 
@@ -357,13 +468,13 @@
             event.preventDefault();
             let isValid = true;
 
-            // Validate assessor and organisation fields
-            const assessorFields = [
+            // Validate assessor, organisation, and service overview fields
+            const staticFields = [
                 'assessorName', 'assessmentDate', 'companyName', 'companyWebsite', 
-                'organisation', 'service'
+                'organisation', 'service', 'serviceDescription'
             ];
-            assessorFields.forEach(field => {
-                const input = document.querySelector(`input[name="${field}"]`);
+            staticFields.forEach(field => {
+                const input = document.querySelector(`[name="${field}"]`);
                 const error = document.getElementById(`${field}Error`);
                 if (input && !input.value.trim()) {
                     error.style.display = 'block';
@@ -428,7 +539,9 @@
 
             if (isValid) {
                 alert('Assessment submitted successfully!');
-                clearFormState(); // Clear state on successful submission
+                exportToJSON();
+                generatePDF();
+                clearFormState();
             }
         });
     </script>
