@@ -6,7 +6,6 @@
     <title>MSP Cloud Backup Service Detailed Assessment</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         .error { color: red; font-size: 0.875rem; display: none; }
         .conditional { display: none; }
@@ -21,12 +20,35 @@
         .dark * { color: #ffffff !important; }
         .dark input, .dark select, .dark textarea { background-color: #4a5568; border-color: #6b7280; }
         .dark input::placeholder, .dark textarea::placeholder { color: #d1d5db; }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; color: black; margin: 0; }
+            .bg-white { background: white; }
+            .border { border: 1px solid black; }
+            .text-gray-900 { color: black; }
+            .shadow-lg { box-shadow: none; }
+            .print-content { display: block !important; }
+            .form-content { display: none !important; }
+            @page {
+                margin: 1cm 1cm 2cm 1cm; /* Leave space for footer */
+            }
+            .print-footer {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                text-align: center;
+                font-size: 8pt;
+                color: black;
+                padding-bottom: 5mm;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-100 flex flex-col justify-between min-h-screen">
-    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-5xl mx-auto mt-4 relative">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-5xl mx-auto mt-4 relative form-content">
         <!-- Light/Dark Mode Toggle (Top Left) -->
-        <div class="absolute top-4 left-4">
+        <div class="absolute top-4 left-4 no-print">
             <i id="themeToggle" class="fas fa-lightbulb text-2xl text-gray-900 dark-mode-toggle"></i>
         </div>
         <!-- Logo (Top Right) -->
@@ -34,7 +56,11 @@
             <img src="logo.png" alt="Xservus Limited Logo" class="logo">
         </div>
         <h1 class="text-3xl font-bold mb-8 text-center text-gray-900">MSP Cloud Backup Service Detailed Assessment</h1>
-        <div id="errorMessage" class="text-red-500 text-center mb-4 hidden">Failed to load questions. Please check the console for details.</div>
+        <div id="errorMessage" class="text-red-500 text-center mb-4 hidden no-print">Failed to load questions. Please check the console for details.</div>
+        <div class="border p-4 mb-8 bg-gray-50 rounded no-print">
+            <h2 class="text-xl font-semibold mb-4 text-gray-900">Liability Waiver</h2>
+            <p class="text-gray-900">Xservus Limited is not liable for the responses provided by the assessor in this MSP Cloud Backup Service Detailed Assessment. The information entered is the responsibility of the assessor, and Xservus Limited makes no warranties or representations regarding the accuracy or completeness of the responses.</p>
+        </div>
         <form id="assessmentForm" class="space-y-8">
             <!-- Assessor and Organisation Details -->
             <div class="border p-6 rounded border-gray-300">
@@ -73,19 +99,45 @@
                 </div>
             </div>
             <!-- Dynamic Questions from JSON -->
-            <div class="text-center">
-                <button type="submit" class="bg-blue-500 text-white px-8 py-3 rounded hover:bg-blue-600">Export to PDF</button>
+            <div class="text-center no-print flex justify-center gap-4">
+                <button type="submit" class="bg-blue-500 text-white px-8 py-3 rounded hover:bg-blue-600">Print to PDF</button>
+                <button type="button" id="exportJsonButton" class="bg-green-500 text-white px-8 py-3 rounded hover:bg-green-600">Export to JSON</button>
+                <label class="bg-purple-500 text-white px-8 py-3 rounded hover:bg-purple-600 cursor-pointer">
+                    Import from JSON
+                    <input type="file" id="importJsonInput" accept=".json" class="hidden">
+                </label>
             </div>
         </form>
     </div>
 
+    <!-- Printable Content (Hidden by Default) -->
+    <div id="printContent" class="print-content bg-white p-8 w-full max-w-5xl mx-auto mt-4" style="display: none;">
+        <div class="text-center">
+            <img src="logo.png" alt="Xservus Limited Logo" class="logo inline-block mb-4">
+            <h1 class="text-3xl font-bold mb-8">MSP Cloud Backup Service Detailed Assessment</h1>
+        </div>
+        <div class="border p-4 mb-8 bg-gray-50 rounded">
+            <h2 class="text-xl font-semibold mb-4">Liability Waiver</h2>
+            <p>Xservus Limited is not liable for the responses provided by the assessor in this MSP Cloud Backup Service Detailed Assessment. The information entered is the responsibility of the assessor, and Xservus Limited makes no warranties or representations regarding the accuracy or completeness of the responses.</p>
+        </div>
+        <div id="printAssessmentDetails"></div>
+        <div id="printQuestions"></div>
+        <footer class="text-center mt-8">
+            <p>Copyright Xservus Limited</p>
+            <p>Version 0.1</p>
+        </footer>
+        <div class="print-footer">
+            Created by the PwnDefend MSP Assessment Tool (MAT) - copyright (c) Xservus Limited
+        </div>
+    </div>
+
     <!-- Clear State Button -->
-    <div class="text-center mt-4">
+    <div class="text-center mt-4 no-print">
         <button id="clearStateButton" class="bg-red-500 text-white px-6 py-2 rounded hover:bg-red-600">Clear Form State</button>
     </div>
 
     <!-- Footer -->
-    <footer class="bg-gray-200 dark:bg-gray-800 text-center py-4 mt-4">
+    <footer class="bg-gray-200 dark:bg-gray-800 text-center py-4 mt-4 no-print">
         <p class="text-gray-900">Copyright Xservus Limited</p>
         <p class="text-gray-900">Version 0.1</p>
     </footer>
@@ -164,13 +216,17 @@
             localStorage.setItem('mspAssessmentFormState', JSON.stringify(formData));
         }
 
-        // Function to load form state from localStorage
-        function loadFormState() {
-            const savedState = localStorage.getItem('mspAssessmentFormState');
-            if (savedState) {
-                const formData = JSON.parse(savedState);
-                const form = document.getElementById('assessmentForm');
+        // Function to load form state from localStorage or imported JSON
+        function loadFormState(formData) {
+            const form = document.getElementById('assessmentForm');
+            form.reset(); // Clear existing form state
+            const conditionals = document.querySelectorAll('.conditional');
+            conditionals.forEach(conditional => {
+                conditional.style.display = 'none';
+                conditional.querySelectorAll('input, select, textarea').forEach(input => input.required = false);
+            });
 
+            if (formData) {
                 // Load text, url, date, number inputs
                 const inputs = form.querySelectorAll('input[type="text"], input[type="url"], input[type="date"], input[type="number"], select, textarea');
                 inputs.forEach(input => {
@@ -198,6 +254,8 @@
                         checkbox.checked = true;
                     }
                 });
+
+                saveFormState(); // Update localStorage with imported data
             }
         }
 
@@ -211,6 +269,72 @@
                 conditional.querySelectorAll('input, select, textarea').forEach(input => input.required = false);
             });
             window.location.reload(); // Reload to reset dynamic content
+        }
+
+        // Function to export form data to JSON
+        function exportToJson() {
+            const form = document.getElementById('assessmentForm');
+            const formData = {};
+
+            // Collect text, url, date, number inputs, selects, textareas
+            const inputs = form.querySelectorAll('input[type="text"], input[type="url"], input[type="date"], input[type="number"], select, textarea');
+            inputs.forEach(input => {
+                formData[input.name] = input.value;
+            });
+
+            // Collect radio inputs
+            const radios = form.querySelectorAll('input[type="radio"]:checked');
+            radios.forEach(radio => {
+                formData[radio.name] = radio.value;
+            });
+
+            // Collect checkboxes
+            const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                if (!formData[checkbox.name]) {
+                    formData[checkbox.name] = [];
+                }
+                if (checkbox.checked) {
+                    formData[checkbox.name].push(checkbox.value);
+                }
+            });
+
+            const json = JSON.stringify(formData, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'msp_assessment.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Function to import form data from JSON
+        function importFromJson(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (file.type !== 'application/json') {
+                alert('Please upload a valid JSON file.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const formData = JSON.parse(e.target.result);
+                    loadFormState(formData);
+                } catch (error) {
+                    console.error('Error parsing JSON:', error);
+                    alert('Failed to import JSON. Please ensure the file is valid.');
+                }
+            };
+            reader.onerror = function() {
+                console.error('Error reading file');
+                alert('Failed to read the JSON file.');
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // Reset file input
         }
 
         // Function to generate form elements from JSON
@@ -373,6 +497,7 @@
         }
 
         // Fetch and render the JSON
+        let questionsData = null;
         fetch('questions.json')
             .then(response => {
                 if (!response.ok) {
@@ -380,133 +505,87 @@
                 }
                 return response.json();
             })
-            .then(data => renderForm(data))
+            .then(data => {
+                questionsData = data;
+                renderForm(data);
+            })
             .catch(error => {
                 console.error('Error loading JSON:', error);
                 const errorMessage = document.getElementById('errorMessage');
                 errorMessage.classList.remove('hidden');
             });
 
+        // Event listeners for export and import
+        document.getElementById('exportJsonButton').addEventListener('click', exportToJson);
+        document.getElementById('importJsonInput').addEventListener('change', importFromJson);
+
         // Clear state button event listener
         document.getElementById('clearStateButton').addEventListener('click', clearFormState);
 
-        // Function to generate PDF
-        function generatePDF(formData, questionsData) {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            let y = 10;
-
-            // Title
-            doc.setFontSize(16);
-            doc.text('MSP Cloud Backup Service Assessment', 10, y);
-            y += 10;
+        // Function to generate printable content
+        function generatePrintableContent(formData, questionsData) {
+            const assessmentDetailsDiv = document.getElementById('printAssessmentDetails');
+            const questionsDiv = document.getElementById('printQuestions');
+            assessmentDetailsDiv.innerHTML = '';
+            questionsDiv.innerHTML = '';
 
             // Assessment Details
-            doc.setFontSize(12);
-            doc.text('Assessment Details', 10, y);
-            y += 5;
-            doc.setFontSize(10);
-            doc.text(`Assessor’s Name: ${formData.assessorName || ''}`, 10, y);
-            y += 5;
-            doc.text(`Date: ${formData.assessmentDate || ''}`, 10, y);
-            y += 5;
-            doc.text(`Assessment Company Name: ${formData.companyName || ''}`, 10, y);
-            y += 5;
-            doc.text(`Assessor’s Company Website: ${formData.companyWebsite || ''}`, 10, y);
-            y += 5;
-            doc.text(`Organisation Being Assessed: ${formData.organisation || ''}`, 10, y);
-            y += 5;
-            doc.text(`Service Being Assessed: ${formData.service || ''}`, 10, y);
-            y += 10;
+            assessmentDetailsDiv.innerHTML = `
+                <div class="border p-6 mb-8">
+                    <h2 class="text-2xl font-semibold mb-6">Assessment Details</h2>
+                    <p><strong>Assessor’s Name:</strong> ${formData.assessorName || 'N/A'}</p>
+                    <p><strong>Date:</strong> ${formData.assessmentDate || 'N/A'}</p>
+                    <p><strong>Assessment Company Name:</strong> ${formData.companyName || 'N/A'}</p>
+                    <p><strong>Assessor’s Company Website:</strong> ${formData.companyWebsite || 'N/A'}</p>
+                    <p><strong>Organisation Being Assessed:</strong> ${formData.organisation || 'N/A'}</p>
+                    <p><strong>Service Being Assessed:</strong> ${formData.service || 'N/A'}</p>
+                </div>
+            `;
 
             // Dynamic Questions
             questionsData.sections.forEach(section => {
-                if (y > 270) {
-                    doc.addPage();
-                    y = 10;
-                }
-                doc.setFontSize(12);
-                doc.text(section.name, 10, y);
-                y += 5;
-
+                let sectionHtml = `<div class="border p-6 mb-8"><h2 class="text-2xl font-semibold mb-6">${section.name}</h2>`;
                 const items = section.subsections || [{ questions: section.questions }];
                 items.forEach(subsection => {
                     if (subsection.name) {
-                        if (y > 270) {
-                            doc.addPage();
-                            y = 10;
-                        }
-                        doc.setFontSize(11);
-                        doc.text(subsection.name, 10, y);
-                        y += 5;
+                        sectionHtml += `<h3 class="text-xl font-medium mb-4">${subsection.name}</h3>`;
                     }
                     subsection.questions.forEach(question => {
-                        if (y > 270) {
-                            doc.addPage();
-                            y = 10;
-                        }
-                        doc.setFontSize(10);
-                        const questionText = `${question.number}. ${question.text}`;
-                        const splitText = doc.splitTextToSize(questionText, 180);
-                        doc.text(splitText, 10, y);
-                        y += splitText.length * 5;
-
+                        sectionHtml += `<p class="mb-2"><span class="question-number">${question.number}.</span> ${question.text}</p>`;
                         let answer = '';
                         if (question.type === 'checkbox') {
-                            answer = (formData[`q${question.number}`] || []).join(', ');
+                            answer = (formData[`q${question.number}`] || []).join(', ') || 'N/A';
                         } else {
-                            answer = formData[`q${question.number}`] || '';
+                            answer = formData[`q${question.number}`] || 'N/A';
                         }
-                        doc.text(`Answer: ${answer || 'N/A'}`, 15, y);
-                        y += 5;
+                        sectionHtml += `<p class="ml-8 mb-4"><strong>Answer:</strong> ${answer}</p>`;
 
                         if (question.conditional && formData[`q${question.number}`] === question.conditional.trigger) {
                             question.conditional.fields.forEach(field => {
-                                if (y > 270) {
-                                    doc.addPage();
-                                    y = 10;
-                                }
                                 const fieldName = `q${question.number}-${field.text.replace(/\s/g, '')}`;
-                                let fieldAnswer = '';
-                                if (field.type === 'radio' || field.type === 'select' || field.type === 'text' || field.type === 'number' || field.type === 'date' || field.type === 'textarea') {
-                                    fieldAnswer = formData[fieldName] || 'N/A';
-                                }
-                                const fieldText = field.number ? `${field.number}. ${field.text}` : field.text;
-                                doc.text(`${fieldText}: ${fieldAnswer}`, 15, y);
-                                y += 5;
+                                let fieldAnswer = formData[fieldName] || 'N/A';
+                                const fieldText = field.number ? `<span class="question-number">${field.number}.</span> ${field.text}` : field.text;
+                                sectionHtml += `<p class="ml-8 mb-2">${fieldText}</p>`;
+                                sectionHtml += `<p class="ml-12 mb-4"><strong>Answer:</strong> ${fieldAnswer}</p>`;
 
                                 if (field.conditional && formData[fieldName] === field.conditional.trigger) {
                                     field.conditional.fields.forEach(subField => {
-                                        if (y > 270) {
-                                            doc.addPage();
-                                            y = 10;
-                                        }
                                         const subFieldName = `q${question.number}-${field.text.replace(/\s/g, '')}-${subField.text.replace(/\s/g, '')}`;
                                         const subFieldAnswer = formData[subFieldName] || 'N/A';
-                                        doc.text(`${subField.text}: ${subFieldAnswer}`, 20, y);
-                                        y += 5;
+                                        sectionHtml += `<p class="ml-12 mb-2">${subField.text}</p>`;
+                                        sectionHtml += `<p class="ml-16 mb-4"><strong>Answer:</strong> ${subFieldAnswer}</p>`;
                                     });
                                 }
                             });
                         }
                     });
-                    y += 5;
                 });
+                sectionHtml += `</div>`;
+                questionsDiv.innerHTML += sectionHtml;
             });
-
-            // Footer
-            if (y > 270) {
-                doc.addPage();
-                y = 10;
-            }
-            doc.setFontSize(8);
-            doc.text('Copyright Xservus Limited | Version 0.1', 10, 290);
-
-            // Save PDF
-            doc.save('MSP_Assessment.pdf');
         }
 
-        // Form validation and PDF export
+        // Form validation and print to PDF
         document.getElementById('assessmentForm').addEventListener('submit', function(event) {
             event.preventDefault();
             let isValid = true;
@@ -607,21 +686,18 @@
                     }
                 });
 
-                // Fetch questions.json to get structure for PDF
-                fetch('questions.json')
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        generatePDF(formData, data);
-                    })
-                    .catch(error => {
-                        console.error('Error loading JSON for PDF:', error);
-                        alert('Failed to generate PDF. Please check the console for details.');
-                    });
+                if (questionsData) {
+                    generatePrintableContent(formData, questionsData);
+                    document.getElementById('printContent').style.display = 'block';
+                    document.querySelector('.form-content').style.display = 'none';
+                    window.print();
+                    // Reset visibility after printing
+                    document.getElementById('printContent').style.display = 'none';
+                    document.querySelector('.form-content').style.display = 'block';
+                } else {
+                    console.error('Questions data not loaded');
+                    alert('Failed to generate printable content. Please check the console for details.');
+                }
             }
         });
     </script>
