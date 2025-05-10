@@ -75,6 +75,11 @@
         </form>
     </div>
 
+    <!-- Clear State Button -->
+    <div class="text-center mt-4">
+        <button id="clearStateButton" class="bg-red-500 text-white px-6 py-2 rounded hover:bg-red-600">Clear Form State</button>
+    </div>
+
     <!-- Footer -->
     <footer class="bg-gray-200 dark:bg-gray-800 text-center py-4 mt-4">
         <p class="text-gray-900">Copyright Xservus Limited</p>
@@ -105,6 +110,86 @@
             }
         }
 
+        // Function to save form state to localStorage
+        function saveFormState() {
+            const form = document.getElementById('assessmentForm');
+            const formData = {};
+            
+            // Save text, url, date, number inputs
+            const inputs = form.querySelectorAll('input[type="text"], input[type="url"], input[type="date"], input[type="number"], select, textarea');
+            inputs.forEach(input => {
+                formData[input.name] = input.value;
+            });
+
+            // Save radio inputs
+            const radios = form.querySelectorAll('input[type="radio"]:checked');
+            radios.forEach(radio => {
+                formData[radio.name] = radio.value;
+            });
+
+            // Save checkboxes
+            const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                if (!formData[checkbox.name]) {
+                    formData[checkbox.name] = [];
+                }
+                if (checkbox.checked) {
+                    formData[checkbox.name].push(checkbox.value);
+                }
+            });
+
+            localStorage.setItem('mspAssessmentState', JSON.stringify(formData));
+        }
+
+        // Function to load form state from localStorage
+        function loadFormState() {
+            const savedState = localStorage.getItem('mspAssessmentState');
+            if (savedState) {
+                const formData = JSON.parse(savedState);
+                const form = document.getElementById('assessmentForm');
+
+                // Load text, url, date, number inputs
+                const inputs = form.querySelectorAll('input[type="text"], input[type="url"], input[type="date"], input[type="number"], select, textarea');
+                inputs.forEach(input => {
+                    if (formData[input.name]) {
+                        input.value = formData[input.name];
+                    }
+                });
+
+                // Load radio inputs
+                const radios = form.querySelectorAll('input[type="radio"]');
+                radios.forEach(radio => {
+                    if (formData[radio.name] === radio.value) {
+                        radio.checked = true;
+                        const fieldId = radio.getAttribute('onclick')?.match(/'conditional-[^']*'/);
+                        if (fieldId) {
+                            toggleField(fieldId[0].replace(/'/g, ''), true);
+                        }
+                    }
+                });
+
+                // Load checkboxes
+                const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+                checkboxes.forEach(checkbox => {
+                    if (formData[checkbox.name] && formData[checkbox.name].includes(checkbox.value)) {
+                        checkbox.checked = true;
+                    }
+                });
+            }
+        }
+
+        // Function to clear form state
+        function clearFormState() {
+            localStorage.removeItem('mspAssessmentState');
+            document.getElementById('assessmentForm').reset();
+            const conditionals = document.querySelectorAll('.conditional');
+            conditionals.forEach(conditional => {
+                conditional.style.display = 'none';
+                conditional.querySelectorAll('input, select, textarea').forEach(input => input.required = false);
+            });
+            window.location.reload(); // Reload to reset dynamic content
+        }
+
         // Function to generate form elements from JSON
         function renderForm(data) {
             const form = document.getElementById('assessmentForm');
@@ -133,6 +218,16 @@
             submitDiv.className = 'text-center';
             submitDiv.innerHTML = '<button type="submit" class="bg-blue-500 text-white px-8 py-3 rounded hover:bg-blue-600">Submit Assessment</button>';
             form.appendChild(submitDiv);
+
+            // Load saved state after rendering
+            loadFormState();
+
+            // Add event listeners for saving state
+            const inputs = form.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                input.addEventListener('change', saveFormState);
+                input.addEventListener('input', saveFormState);
+            });
         }
 
         // Function to render questions
@@ -254,6 +349,9 @@
                 errorMessage.classList.remove('hidden');
             });
 
+        // Clear state button event listener
+        document.getElementById('clearStateButton').addEventListener('click', clearFormState);
+
         // Form validation
         document.getElementById('assessmentForm').addEventListener('submit', function(event) {
             event.preventDefault();
@@ -330,7 +428,7 @@
 
             if (isValid) {
                 alert('Assessment submitted successfully!');
-                this.reset();
+                clearFormState(); // Clear state on successful submission
             }
         });
     </script>
